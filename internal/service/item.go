@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	"github.com/danil/cdek-wishlist/internal/model"
 	"github.com/danil/cdek-wishlist/internal/repository"
@@ -29,13 +28,20 @@ func NewItemService(itemRepo repository.ItemRepository, wishlistRepo repository.
 	}
 }
 
-func (s *itemService) Create(ctx context.Context, userID, wishlistID int64, req model.CreateItemRequest) (*model.Item, error) {
+func (s *itemService) ownerWishlist(ctx context.Context, userID, wishlistID int64) error {
 	w, err := s.wishlistRepo.GetByID(ctx, wishlistID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if w.UserID != userID {
-		return nil, model.ErrForbidden
+		return model.ErrForbidden
+	}
+	return nil
+}
+
+func (s *itemService) Create(ctx context.Context, userID, wishlistID int64, req model.CreateItemRequest) (*model.Item, error) {
+	if err := s.ownerWishlist(ctx, userID, wishlistID); err != nil {
+		return nil, err
 	}
 
 	it := &model.Item{
@@ -53,12 +59,8 @@ func (s *itemService) Create(ctx context.Context, userID, wishlistID int64, req 
 }
 
 func (s *itemService) GetByID(ctx context.Context, userID, wishlistID, id int64) (*model.Item, error) {
-	w, err := s.wishlistRepo.GetByID(ctx, wishlistID)
-	if err != nil {
+	if err := s.ownerWishlist(ctx, userID, wishlistID); err != nil {
 		return nil, err
-	}
-	if w.UserID != userID {
-		return nil, model.ErrForbidden
 	}
 
 	it, err := s.itemRepo.GetByID(ctx, id)
@@ -72,24 +74,16 @@ func (s *itemService) GetByID(ctx context.Context, userID, wishlistID, id int64)
 }
 
 func (s *itemService) GetAll(ctx context.Context, userID, wishlistID int64) ([]model.Item, error) {
-	w, err := s.wishlistRepo.GetByID(ctx, wishlistID)
-	if err != nil {
+	if err := s.ownerWishlist(ctx, userID, wishlistID); err != nil {
 		return nil, err
-	}
-	if w.UserID != userID {
-		return nil, model.ErrForbidden
 	}
 
 	return s.itemRepo.GetAllByWishlistID(ctx, wishlistID)
 }
 
 func (s *itemService) Update(ctx context.Context, userID, wishlistID, id int64, req model.UpdateItemRequest) (*model.Item, error) {
-	w, err := s.wishlistRepo.GetByID(ctx, wishlistID)
-	if err != nil {
+	if err := s.ownerWishlist(ctx, userID, wishlistID); err != nil {
 		return nil, err
-	}
-	if w.UserID != userID {
-		return nil, model.ErrForbidden
 	}
 
 	it, err := s.itemRepo.GetByID(ctx, id)
@@ -120,12 +114,8 @@ func (s *itemService) Update(ctx context.Context, userID, wishlistID, id int64, 
 }
 
 func (s *itemService) Delete(ctx context.Context, userID, wishlistID, id int64) error {
-	w, err := s.wishlistRepo.GetByID(ctx, wishlistID)
-	if err != nil {
+	if err := s.ownerWishlist(ctx, userID, wishlistID); err != nil {
 		return err
-	}
-	if w.UserID != userID {
-		return model.ErrForbidden
 	}
 
 	it, err := s.itemRepo.GetByID(ctx, id)
@@ -149,7 +139,7 @@ func (s *itemService) Reserve(ctx context.Context, token string, itemID int64) e
 	if err != nil {
 		return err
 	}
-	// Не раскрываем существование item из других вишлистов по публичному токену.
+	// Do not leak the existence of items belonging to other wishlists via a public token.
 	if it.WishlistID != w.ID {
 		return model.ErrNotFound
 	}
@@ -158,15 +148,6 @@ func (s *itemService) Reserve(ctx context.Context, token string, itemID int64) e
 		return model.ErrAlreadyReserved
 	}
 
-	err = s.itemRepo.Reserve(ctx, itemID)
-	if err != nil {
-		// репозиторий возвращает ErrAlreadyReserved, если update не обновил строку
-		if errors.Is(err, model.ErrAlreadyReserved) {
-			return model.ErrAlreadyReserved
-		}
-		return err
-	}
-
-	return nil
+	// Atomic update — returns ErrAlreadyReserved if a concurrent request won the race.
+	return s.itemRepo.Reserve(ctx, itemID)
 }
-

@@ -34,13 +34,13 @@ func main() {
 	}
 	log.Println("connected to database")
 
-	userRepo := repository.NewUserRepository(pool)
+	userRepo    := repository.NewUserRepository(pool)
 	wishlistRepo := repository.NewWishlistRepository(pool)
-	itemRepo := repository.NewItemRepository(pool)
+	itemRepo    := repository.NewItemRepository(pool)
 
-	authSvc := service.NewAuthService(userRepo, cfg.JWT.Secret, int64(cfg.JWT.Expiration.Seconds()))
+	authSvc     := service.NewAuthService(userRepo, cfg.JWT.Secret, cfg.JWT.Expiration)
 	wishlistSvc := service.NewWishlistService(wishlistRepo, itemRepo)
-	itemSvc := service.NewItemService(itemRepo, wishlistRepo)
+	itemSvc     := service.NewItemService(itemRepo, wishlistRepo)
 
 	validate := validator.New()
 
@@ -51,11 +51,9 @@ func main() {
 		Public:   handler.NewPublicHandler(wishlistSvc, itemSvc),
 	}
 
-	router := handler.NewRouter(h, cfg.JWT.Secret)
-
 	srv := &http.Server{
 		Addr:         ":" + cfg.Server.Port,
-		Handler:      router,
+		Handler:      handler.NewRouter(h, cfg.JWT.Secret),
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
 		IdleTimeout:  cfg.Server.IdleTimeout,
@@ -81,6 +79,5 @@ func main() {
 		log.Fatalf("server forced to shutdown: %v", err)
 	}
 
-	pool.Close()
 	log.Println("server stopped gracefully")
 }

@@ -2,10 +2,8 @@ package repository
 
 import (
 	"context"
-	"errors"
 
 	"github.com/danil/cdek-wishlist/internal/model"
-	"github.com/jackc/pgx/v5"
 )
 
 type UserRepository interface {
@@ -63,10 +61,4 @@ func (r *userRepository) GetByID(ctx context.Context, id int64) (*model.User, er
 	return &u, nil
 }
 
-// compile-time guard for accidental API drift
 var _ UserRepository = (*userRepository)(nil)
-
-// keep pgx imported even if build tags change
-var _ = errors.Is
-var _ = pgx.ErrNoRows
-

@@ -173,7 +173,7 @@ func TestWishlistService_GetByID_Forbidden(t *testing.T) {
 	}
 }
 
-func TestWishlistService_GetByID_LoadsItems_IgnoresNotFound(t *testing.T) {
+func TestWishlistService_GetByID_LoadsItems_Empty(t *testing.T) {
 	wlRepo := &mockWishlistRepo{
 		getByIDFn: func(ctx context.Context, id int64) (*model.Wishlist, error) {
 			return &model.Wishlist{ID: id, UserID: 1}, nil
@@ -181,7 +181,7 @@ func TestWishlistService_GetByID_LoadsItems_IgnoresNotFound(t *testing.T) {
 	}
 	itemRepo := &mockItemRepo{
 		getAllByWishlistIDFn: func(ctx context.Context, wishlistID int64) ([]model.Item, error) {
-			return nil, model.ErrNotFound
+			return make([]model.Item, 0), nil
 		},
 	}
 
@@ -190,8 +190,8 @@ func TestWishlistService_GetByID_LoadsItems_IgnoresNotFound(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
-	if w.Items != nil {
-		t.Fatalf("expected nil items slice on not found, got %#v", w.Items)
+	if len(w.Items) != 0 {
+		t.Fatalf("expected empty items slice, got %#v", w.Items)
 	}
 }
 

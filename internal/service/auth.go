@@ -17,22 +17,21 @@ type AuthService interface {
 }
 
 type authService struct {
-	userRepo repository.UserRepository
-
+	userRepo  repository.UserRepository
 	jwtSecret []byte
 	jwtExpiry time.Duration
 }
 
-func NewAuthService(userRepo repository.UserRepository, jwtSecret string, jwtExpirySeconds int64) AuthService {
+func NewAuthService(userRepo repository.UserRepository, jwtSecret string, jwtExpiry time.Duration) AuthService {
 	return &authService{
-		userRepo:   userRepo,
+		userRepo:  userRepo,
 		jwtSecret: []byte(jwtSecret),
-		jwtExpiry: time.Duration(jwtExpirySeconds) * time.Second,
+		jwtExpiry: jwtExpiry,
 	}
 }
 
 func (s *authService) Register(ctx context.Context, req model.RegisterRequest) (*model.TokenResponse, error) {
-	// Быстрый pre-check чтобы вернуть красивый 409, но всё равно полагаемся на UNIQUE в БД.
+	// Pre-check to return a clean 409 before hashing; UNIQUE constraint is the authoritative guard.
 	if _, err := s.userRepo.GetByEmail(ctx, req.Email); err == nil {
 		return nil, model.ErrAlreadyExists
 	} else if !errors.Is(err, model.ErrNotFound) {
@@ -50,7 +49,6 @@ func (s *authService) Register(ctx context.Context, req model.RegisterRequest) (
 	}
 
 	if err := s.userRepo.Create(ctx, u); err != nil {
-		// если email уже есть (race) — отдаём доменную ошибку
 		if errors.Is(err, model.ErrAlreadyExists) {
 			return nil, model.ErrAlreadyExists
 		}
@@ -98,4 +96,3 @@ func (s *authService) issueToken(userID int64) (string, error) {
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return t.SignedString(s.jwtSecret)
 }
-

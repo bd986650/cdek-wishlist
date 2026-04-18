@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
-	"time"
 
 	"github.com/danil/cdek-wishlist/internal/model"
 	"github.com/danil/cdek-wishlist/internal/repository"
@@ -40,9 +39,10 @@ func (s *wishlistService) Create(ctx context.Context, userID int64, req model.Cr
 		EventDate:   req.EventDate,
 	}
 
-	// Генерируем токен. На случай коллизии по UNIQUE(token) — повторяем несколько раз.
-	const attempts = 5
-	for i := 0; i < attempts; i++ {
+	// Retry on UNIQUE(token) collision — collision probability is negligible (32 random bytes),
+	// but we guard against it anyway.
+	const maxAttempts = 5
+	for range maxAttempts {
 		token, err := generateTokenHex(32)
 		if err != nil {
 			return nil, err
@@ -51,7 +51,6 @@ func (s *wishlistService) Create(ctx context.Context, userID int64, req model.Cr
 
 		if err := s.wishlistRepo.Create(ctx, w); err != nil {
 			if errors.Is(err, model.ErrAlreadyExists) {
-				// коллизия токена — пробуем ещё раз
 				continue
 			}
 			return nil, err
@@ -72,7 +71,7 @@ func (s *wishlistService) GetByID(ctx context.Context, userID, id int64) (*model
 	}
 
 	items, err := s.itemRepo.GetAllByWishlistID(ctx, w.ID)
-	if err != nil && !errors.Is(err, model.ErrNotFound) {
+	if err != nil {
 		return nil, err
 	}
 	w.Items = items
@@ -129,7 +128,7 @@ func (s *wishlistService) GetByToken(ctx context.Context, token string) (*model.
 	}
 
 	items, err := s.itemRepo.GetAllByWishlistID(ctx, w.ID)
-	if err != nil && !errors.Is(err, model.ErrNotFound) {
+	if err != nil {
 		return nil, err
 	}
 	w.Items = items
@@ -144,7 +143,3 @@ func generateTokenHex(bytesLen int) (string, error) {
 	}
 	return hex.EncodeToString(b), nil
 }
-
-// небольшая страховка от случайного использования локального времени где-то рядом
-var _ = time.UTC
-

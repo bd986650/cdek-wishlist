@@ -41,7 +41,7 @@ func TestAuthService_Register_AlreadyExistsPreCheck(t *testing.T) {
 		},
 	}
 
-	svc := NewAuthService(repo, "secret", 3600)
+	svc := NewAuthService(repo, "secret", 3600*time.Second)
 	_, err := svc.Register(context.Background(), model.RegisterRequest{Email: "a@b.c", Password: "password12"})
 	if !errors.Is(err, model.ErrAlreadyExists) {
 		t.Fatalf("expected ErrAlreadyExists, got %v", err)
@@ -55,7 +55,7 @@ func TestAuthService_Register_GetByEmailUnexpectedError(t *testing.T) {
 		},
 	}
 
-	svc := NewAuthService(repo, "secret", 3600)
+	svc := NewAuthService(repo, "secret", 3600*time.Second)
 	_, err := svc.Register(context.Background(), model.RegisterRequest{Email: "a@b.c", Password: "password12"})
 	if err == nil || err.Error() != "db down" {
 		t.Fatalf("expected db error, got %v", err)
@@ -72,7 +72,7 @@ func TestAuthService_Register_CreateConflict(t *testing.T) {
 		},
 	}
 
-	svc := NewAuthService(repo, "secret", 3600)
+	svc := NewAuthService(repo, "secret", 3600*time.Second)
 	_, err := svc.Register(context.Background(), model.RegisterRequest{Email: "a@b.c", Password: "password12"})
 	if !errors.Is(err, model.ErrAlreadyExists) {
 		t.Fatalf("expected ErrAlreadyExists, got %v", err)
@@ -91,7 +91,7 @@ func TestAuthService_Register_Success_IssuesJWT(t *testing.T) {
 		},
 	}
 
-	svc := NewAuthService(repo, "super-secret", 3600)
+	svc := NewAuthService(repo, "super-secret", 3600*time.Second)
 	resp, err := svc.Register(context.Background(), model.RegisterRequest{Email: "a@b.c", Password: "password12"})
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
@@ -121,7 +121,7 @@ func TestAuthService_Login_InvalidCredentials_UserNotFound(t *testing.T) {
 			return nil, model.ErrNotFound
 		},
 	}
-	svc := NewAuthService(repo, "secret", 3600)
+	svc := NewAuthService(repo, "secret", 3600*time.Second)
 	_, err := svc.Login(context.Background(), model.LoginRequest{Email: "a@b.c", Password: "x"})
 	if !errors.Is(err, model.ErrInvalidCredentials) {
 		t.Fatalf("expected ErrInvalidCredentials, got %v", err)
@@ -139,7 +139,7 @@ func TestAuthService_Login_InvalidCredentials_BadPassword(t *testing.T) {
 			return &model.User{ID: 7, Email: email, PasswordHash: string(hash)}, nil
 		},
 	}
-	svc := NewAuthService(repo, "secret", 3600)
+	svc := NewAuthService(repo, "secret", 3600*time.Second)
 	_, err = svc.Login(context.Background(), model.LoginRequest{Email: "a@b.c", Password: "wrong"})
 	if !errors.Is(err, model.ErrInvalidCredentials) {
 		t.Fatalf("expected ErrInvalidCredentials, got %v", err)
@@ -157,7 +157,7 @@ func TestAuthService_Login_Success(t *testing.T) {
 			return &model.User{ID: 9, Email: email, PasswordHash: string(hash)}, nil
 		},
 	}
-	svc := NewAuthService(repo, "secret", 3600)
+	svc := NewAuthService(repo, "secret", 3600*time.Second)
 	resp, err := svc.Login(context.Background(), model.LoginRequest{Email: "a@b.c", Password: "right"})
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)

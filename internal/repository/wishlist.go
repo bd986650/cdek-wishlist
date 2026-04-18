@@ -44,14 +44,8 @@ func (r *wishlistRepository) GetByID(ctx context.Context, id int64) (*model.Wish
 
 	var w model.Wishlist
 	err := r.db.QueryRow(ctx, q, id).Scan(
-		&w.ID,
-		&w.UserID,
-		&w.Title,
-		&w.Description,
-		&w.EventDate,
-		&w.Token,
-		&w.CreatedAt,
-		&w.UpdatedAt,
+		&w.ID, &w.UserID, &w.Title, &w.Description,
+		&w.EventDate, &w.Token, &w.CreatedAt, &w.UpdatedAt,
 	)
 	if err != nil {
 		return nil, mapPgError(err)
@@ -73,25 +67,19 @@ func (r *wishlistRepository) GetAllByUserID(ctx context.Context, userID int64) (
 	}
 	defer rows.Close()
 
-	var res []model.Wishlist
+	res := make([]model.Wishlist, 0)
 	for rows.Next() {
 		var w model.Wishlist
 		if err := rows.Scan(
-			&w.ID,
-			&w.UserID,
-			&w.Title,
-			&w.Description,
-			&w.EventDate,
-			&w.Token,
-			&w.CreatedAt,
-			&w.UpdatedAt,
+			&w.ID, &w.UserID, &w.Title, &w.Description,
+			&w.EventDate, &w.Token, &w.CreatedAt, &w.UpdatedAt,
 		); err != nil {
 			return nil, mapPgError(err)
 		}
 		res = append(res, w)
 	}
-	if rows.Err() != nil {
-		return nil, mapPgError(rows.Err())
+	if err := rows.Err(); err != nil {
+		return nil, mapPgError(err)
 	}
 
 	return res, nil
@@ -100,10 +88,10 @@ func (r *wishlistRepository) GetAllByUserID(ctx context.Context, userID int64) (
 func (r *wishlistRepository) Update(ctx context.Context, w *model.Wishlist) error {
 	const q = `
 		UPDATE wishlists
-		SET title = $1,
+		SET title       = $1,
 		    description = $2,
-		    event_date = $3,
-		    updated_at = NOW()
+		    event_date  = $3,
+		    updated_at  = NOW()
 		WHERE id = $4
 		RETURNING updated_at
 	`
@@ -134,14 +122,8 @@ func (r *wishlistRepository) GetByToken(ctx context.Context, token string) (*mod
 
 	var w model.Wishlist
 	err := r.db.QueryRow(ctx, q, token).Scan(
-		&w.ID,
-		&w.UserID,
-		&w.Title,
-		&w.Description,
-		&w.EventDate,
-		&w.Token,
-		&w.CreatedAt,
-		&w.UpdatedAt,
+		&w.ID, &w.UserID, &w.Title, &w.Description,
+		&w.EventDate, &w.Token, &w.CreatedAt, &w.UpdatedAt,
 	)
 	if err != nil {
 		return nil, mapPgError(err)
@@ -150,4 +132,3 @@ func (r *wishlistRepository) GetByToken(ctx context.Context, token string) (*mod
 }
 
 var _ WishlistRepository = (*wishlistRepository)(nil)
-
