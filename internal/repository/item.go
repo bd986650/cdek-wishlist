@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/danil/cdek-wishlist/internal/model"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type ItemRepository interface {
@@ -17,10 +16,10 @@ type ItemRepository interface {
 }
 
 type itemRepository struct {
-	db *pgxpool.Pool
+	db DB
 }
 
-func NewItemRepository(db *pgxpool.Pool) ItemRepository {
+func NewItemRepository(db DB) ItemRepository {
 	return &itemRepository{db: db}
 }
 

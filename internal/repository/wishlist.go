@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/danil/cdek-wishlist/internal/model"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type WishlistRepository interface {
@@ -17,10 +16,10 @@ type WishlistRepository interface {
 }
 
 type wishlistRepository struct {
-	db *pgxpool.Pool
+	db DB
 }
 
-func NewWishlistRepository(db *pgxpool.Pool) WishlistRepository {
+func NewWishlistRepository(db DB) WishlistRepository {
 	return &wishlistRepository{db: db}
 }
 

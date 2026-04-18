@@ -6,7 +6,6 @@ import (
 
 	"github.com/danil/cdek-wishlist/internal/model"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type UserRepository interface {
@@ -16,10 +15,10 @@ type UserRepository interface {
 }
 
 type userRepository struct {
-	db *pgxpool.Pool
+	db DB
 }
 
-func NewUserRepository(db *pgxpool.Pool) UserRepository {
+func NewUserRepository(db DB) UserRepository {
 	return &userRepository{db: db}
 }
 
