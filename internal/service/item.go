@@ -139,7 +139,6 @@ func (s *itemService) Reserve(ctx context.Context, token string, itemID int64) e
 	if err != nil {
 		return err
 	}
-	// Do not leak the existence of items belonging to other wishlists via a public token.
 	if it.WishlistID != w.ID {
 		return model.ErrNotFound
 	}
@@ -148,6 +147,5 @@ func (s *itemService) Reserve(ctx context.Context, token string, itemID int64) e
 		return model.ErrAlreadyReserved
 	}
 
-	// Atomic update — returns ErrAlreadyReserved if a concurrent request won the race.
 	return s.itemRepo.Reserve(ctx, itemID)
 }

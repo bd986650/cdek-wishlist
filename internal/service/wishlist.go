@@ -39,8 +39,6 @@ func (s *wishlistService) Create(ctx context.Context, userID int64, req model.Cr
 		EventDate:   req.EventDate,
 	}
 
-	// Retry on UNIQUE(token) collision — collision probability is negligible (32 random bytes),
-	// but we guard against it anyway.
 	const maxAttempts = 5
 	for range maxAttempts {
 		token, err := generateTokenHex(32)

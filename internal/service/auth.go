@@ -31,7 +31,6 @@ func NewAuthService(userRepo repository.UserRepository, jwtSecret string, jwtExp
 }
 
 func (s *authService) Register(ctx context.Context, req model.RegisterRequest) (*model.TokenResponse, error) {
-	// Pre-check to return a clean 409 before hashing; UNIQUE constraint is the authoritative guard.
 	if _, err := s.userRepo.GetByEmail(ctx, req.Email); err == nil {
 		return nil, model.ErrAlreadyExists
 	} else if !errors.Is(err, model.ErrNotFound) {

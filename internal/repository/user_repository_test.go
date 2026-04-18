@@ -96,5 +96,4 @@ func TestUserRepository_GetByEmail_Success(t *testing.T) {
 	}
 }
 
-// compile-time assertion: pgxmock pool implements our DB contract.
 var _ DB = (pgxmock.PgxPoolIface)(nil)

@@ -115,9 +115,6 @@ func (r *itemRepository) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-// Reserve atomically sets is_reserved=true only when it was false.
-// Returns ErrAlreadyReserved when RowsAffected=0 (either not found or already reserved —
-// the service layer pre-checks existence, so RowsAffected=0 here means a concurrent race).
 func (r *itemRepository) Reserve(ctx context.Context, id int64) error {
 	const q = `
 		UPDATE wishlist_items

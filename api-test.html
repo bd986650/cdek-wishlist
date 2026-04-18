@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wishlist API — тестер</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a2332;
+      --border: #2d3a4d;
+      --text: #e6edf3;
+      --muted: #8b9cb3;
+      --accent: #58a6ff;
+      --ok: #3fb950;
+      --err: #f85149;
+      --sidebar-w: min(22rem, 92vw);
+    }
+    * { box-sizing: border-box; }
+    html { height: 100%; }
+    body {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      min-height: 100%;
+      line-height: 1.45;
+    }
+    .layout {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.25rem;
+      max-width: 120rem;
+      margin: 0 auto;
+      padding: 1rem 1.25rem 2rem;
+      min-height: 100vh;
+    }
+    .sidebar {
+      flex: 0 0 var(--sidebar-w);
+      width: var(--sidebar-w);
+      position: sticky;
+      top: 0;
+      max-height: 100vh;
+      overflow-y: auto;
+      padding: 0.25rem 0.5rem 1rem 0;
+      z-index: 2;
+      border-right: 1px solid var(--border);
+      background: linear-gradient(90deg, var(--bg) 70%, transparent);
+    }
+    .sidebar::-webkit-scrollbar { width: 6px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .main {
+      flex: 1;
+      min-width: 0;
+      padding-bottom: 3rem;
+    }
+    h1 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin: 0 0 0.15rem;
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin: 0 0 0.85rem;
+      line-height: 1.4;
+    }
+    .subtitle code {
+      font-size: 0.72rem;
+      background: var(--panel);
+      padding: 0.1em 0.35em;
+      border-radius: 4px;
+    }
+    h2 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin: 1.5rem 0 0.75rem;
+      padding-bottom: 0.35rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h2:first-child { margin-top: 0; }
+    p.note { color: var(--muted); font-size: 0.88rem; margin: 0.5rem 0 1rem; }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: flex-end;
+      margin-bottom: 0.75rem;
+    }
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    input, textarea, select, button {
+      font: inherit;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      padding: 0.45rem 0.6rem;
+    }
+    .sidebar input { font-size: 0.8rem; }
+    input:focus, textarea:focus {
+      outline: 1px solid var(--accent);
+    }
+    textarea { width: 100%; min-height: 120px; font-family: ui-monospace, monospace; font-size: 0.82rem; }
+    button {
+      cursor: pointer;
+      background: #212c3d;
+      border-color: #3d4f66;
+    }
+    button:hover { background: #2a3749; }
+    button.primary { background: #1f3a5f; border-color: var(--accent); color: #c8e0ff; }
+    button.primary:hover { background: #254a78; }
+    .toolbar {
+      padding: 0.85rem;
+      background: var(--panel);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .toolbar .row { margin-bottom: 0.5rem; }
+    .toolbar .row:last-child { margin-bottom: 0; }
+    .log-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin: 1rem 0 0.4rem;
+    }
+    .log {
+      margin-top: 0;
+      padding: 0.85rem;
+      background: #0d1117;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      min-height: 6rem;
+      max-height: min(42vh, 22rem);
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: ui-monospace, monospace;
+      font-size: 0.72rem;
+    }
+    .log .status { margin-bottom: 0.5rem; }
+    .log .status.ok { color: var(--ok); }
+    .log .status.bad { color: var(--err); }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
+    .flex { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+    small { color: var(--muted); }
+    .muted { color: var(--muted); }
+    @media (max-width: 56rem) {
+      .layout {
+        flex-direction: column;
+        padding: 0.75rem 1rem;
+        gap: 0;
+      }
+      .sidebar {
+        position: relative;
+        width: 100%;
+        max-height: none;
+        overflow: visible;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: 0 0 1rem;
+        margin-bottom: 1rem;
+        background: var(--bg);
+      }
+      .log { max-height: 16rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <h1>Wishlist API</h1>
+
+      <div class="toolbar">
+        <div class="row">
+          <label style="width: 100%;">
+            Базовый URL
+            <input type="text" id="baseUrl" placeholder="http://localhost:8080" autocomplete="off" />
+          </label>
+        </div>
+        <div class="flex">
+          <button type="button" id="saveBase">Сохранить URL</button>
+        </div>
+        <div class="row" style="margin-top: 0.65rem;">
+          <label style="width: 100%;">
+            JWT (Bearer)
+            <input type="text" id="jwt" placeholder="после login/register" autocomplete="off" />
+          </label>
+        </div>
+        <div class="flex">
+          <button type="button" id="clearJwt">Очистить JWT</button>
+        </div>
+        <div class="row" style="margin-top: 0.65rem;">
+          <label style="width: 100%;">
+            Публичный token (<code>/shared/…</code>)
+            <input type="text" id="publicToken" placeholder="из ответа POST wishlists" autocomplete="off" />
+          </label>
+        </div>
+      </div>
+
+      <div class="log-label">Последний ответ</div>
+      <div id="out" class="log" aria-live="polite"><span class="muted">Ответ появится после запроса.</span></div>
+    </aside>
+
+    <main class="main">
+  <h2>Авторизация</h2>
+  <div class="grid2">
+    <div>
+      <label>Email <input type="email" id="regEmail" value="test@example.com" /></label>
+      <label>Пароль (≥8) <input type="password" id="regPass" value="password12" /></label>
+      <div class="flex" style="margin-top:0.5rem;">
+        <button type="button" class="primary" id="btnRegister">POST /auth/register</button>
+      </div>
+    </div>
+    <div>
+      <label>Email <input type="email" id="loginEmail" value="test@example.com" /></label>
+      <label>Пароль <input type="password" id="loginPass" value="password12" /></label>
+      <div class="flex" style="margin-top:0.5rem;">
+        <button type="button" class="primary" id="btnLogin">POST /auth/login</button>
+      </div>
+    </div>
+  </div>
+
+  <h2>Вишлисты (JWT)</h2>
+  <div class="row">
+    <label>ID вишлиста (для get/put/delete)
+      <input type="number" id="wishlistId" placeholder="1" min="1" />
+    </label>
+  </div>
+  <p><small>Тело создания:</small></p>
+  <textarea id="createWishlistBody">{
+  "title": "Мой список",
+  "description": "Описание",
+  "event_date": "2026-06-01"
+}</textarea>
+  <div class="flex" style="margin: 0.5rem 0;">
+    <button type="button" class="primary" id="btnWishlistCreate">POST /wishlists/</button>
+    <button type="button" id="btnWishlistList">GET /wishlists/</button>
+    <button type="button" id="btnWishlistGet">GET /wishlists/{id}</button>
+    <button type="button" id="btnWishlistDelete">DELETE /wishlists/{id}</button>
+  </div>
+  <p><small>Тело обновления (PUT) — только нужные поля:</small></p>
+  <textarea id="updateWishlistBody">{
+  "title": "Новое название",
+  "description": null,
+  "event_date": "2026-07-01"
+}</textarea>
+  <div class="flex">
+    <button type="button" id="btnWishlistPut">PUT /wishlists/{id}</button>
+  </div>
+
+  <h2>Позиции (JWT)</h2>
+  <div class="row">
+    <label>Wishlist ID <input type="number" id="itemWishlistId" placeholder="1" min="1" /></label>
+    <label>Item ID <input type="number" id="itemId" placeholder="1" min="1" /></label>
+  </div>
+  <p><small>Тело создания позиции:</small></p>
+  <textarea id="createItemBody">{
+  "name": "Подарок",
+  "description": "Описание",
+  "url": "https://example.com",
+  "priority": 5
+}</textarea>
+  <div class="flex" style="margin: 0.5rem 0;">
+    <button type="button" class="primary" id="btnItemCreate">POST /wishlists/…/items/</button>
+    <button type="button" id="btnItemList">GET /wishlists/…/items/</button>
+    <button type="button" id="btnItemGet">GET /wishlists/…/items/{itemID}</button>
+    <button type="button" id="btnItemDelete">DELETE /wishlists/…/items/{itemID}</button>
+  </div>
+  <p><small>Тело обновления позиции:</small></p>
+  <textarea id="updateItemBody">{
+  "name": "Другое имя",
+  "priority": 10
+}</textarea>
+  <div class="flex">
+    <button type="button" id="btnItemPut">PUT /wishlists/…/items/{itemID}</button>
+  </div>
+
+  <h2>Публичные (без JWT)</h2>
+  <div class="flex">
+    <button type="button" id="btnSharedGet">GET /shared/{token}</button>
+    <button type="button" class="primary" id="btnReserve">POST /shared/{token}/items/{itemID}/reserve</button>
+  </div>
+  <p class="note">Для резерва укажите публичный token и ID позиции (из ответа GET shared или из вишлиста).</p>
+
+    </main>
+  </div>
+
+  <script>
+(function () {
+  const LS_BASE = 'wishlistApiBaseUrl';
+  const LS_JWT = 'wishlistApiJwt';
+  const LS_PUB = 'wishlistApiPublicToken';
+
+  const $ = (id) => document.getElementById(id);
+  const baseEl = $('baseUrl');
+  const jwtEl = $('jwt');
+  const pubEl = $('publicToken');
+  const out = $('out');
+
+  function load() {
+    baseEl.value = localStorage.getItem(LS_BASE) || 'http://localhost:8080';
+    jwtEl.value = localStorage.getItem(LS_JWT) || '';
+    pubEl.value = localStorage.getItem(LS_PUB) || '';
+  }
+
+  function base() {
+    let u = (baseEl.value || '').trim().replace(/\/+$/, '');
+    return u || 'http://localhost:8080';
+  }
+
+  function log(status, ok, title, bodyText) {
+    const esc = (s) => String(s).replace(/</g, '&lt;');
+    out.innerHTML =
+      '<div class="status ' + (ok ? 'ok' : 'bad') + '">' + esc(title) + ' — HTTP ' + status + '</div>' +
+      '<div>' + esc(bodyText) + '</div>';
+  }
+
+  function tryExtractToken(jsonStr) {
+    try {
+      const o = JSON.parse(jsonStr);
+      if (!o || typeof o.token !== 'string') return;
+      if (o.id != null) {
+        pubEl.value = o.token;
+        localStorage.setItem(LS_PUB, o.token);
+      } else {
+        jwtEl.value = o.token;
+        localStorage.setItem(LS_JWT, o.token);
+      }
+    } catch (_) {}
+  }
+
+  async function req(method, path, body, useAuth) {
+    const url = base() + path;
+    const headers = { Accept: 'application/json' };
+    if (body !== undefined) {
+      headers['Content-Type'] = 'application/json';
+    }
+    if (useAuth) {
+      const t = jwtEl.value.trim();
+      if (!t) {
+        log(0, false, 'Нужен JWT', 'Заполните поле JWT или выполните login/register.');
+        return;
+      }
+      headers['Authorization'] = 'Bearer ' + t;
+    }
+    let res;
+    try {
+      res = await fetch(url, {
+        method,
+        headers,
+        body: body !== undefined ? body : undefined,
+      });
+    } catch (e) {
+      log(0, false, 'Сеть', String(e.message || e));
+      return;
+    }
+    const text = await res.text();
+    let pretty = text;
+    try {
+      pretty = JSON.stringify(JSON.parse(text), null, 2);
+    } catch (_) {}
+    log(res.status, res.ok, method + ' ' + path, pretty || '(пусто)');
+    if (res.ok) tryExtractToken(text);
+  }
+
+  $('saveBase').onclick = () => {
+    localStorage.setItem(LS_BASE, base());
+    log(200, true, 'Сохранено', base());
+  };
+  $('clearJwt').onclick = () => {
+    jwtEl.value = '';
+    localStorage.removeItem(LS_JWT);
+    log(200, true, 'JWT очищен', '');
+  };
+
+  jwtEl.addEventListener('change', () => localStorage.setItem(LS_JWT, jwtEl.value.trim()));
+  pubEl.addEventListener('change', () => localStorage.setItem(LS_PUB, pubEl.value.trim()));
+
+  $('btnRegister').onclick = () => {
+    const body = JSON.stringify({
+      email: $('regEmail').value.trim(),
+      password: $('regPass').value,
+    });
+    req('POST', '/api/v1/auth/register', body, false);
+  };
+  $('btnLogin').onclick = () => {
+    const body = JSON.stringify({
+      email: $('loginEmail').value.trim(),
+      password: $('loginPass').value,
+    });
+    req('POST', '/api/v1/auth/login', body, false);
+  };
+
+  $('btnWishlistCreate').onclick = () => req('POST', '/api/v1/wishlists/', $('createWishlistBody').value, true);
+  $('btnWishlistList').onclick = () => req('GET', '/api/v1/wishlists/', undefined, true);
+  $('btnWishlistGet').onclick = () => {
+    const id = $('wishlistId').value;
+    if (!id) { log(0, false, 'GET', 'Укажите ID вишлиста'); return; }
+    req('GET', '/api/v1/wishlists/' + id, undefined, true);
+  };
+  $('btnWishlistPut').onclick = () => {
+    const id = $('wishlistId').value;
+    if (!id) { log(0, false, 'PUT', 'Укажите ID вишлиста'); return; }
+    req('PUT', '/api/v1/wishlists/' + id, $('updateWishlistBody').value, true);
+  };
+  $('btnWishlistDelete').onclick = () => {
+    const id = $('wishlistId').value;
+    if (!id) { log(0, false, 'DELETE', 'Укажите ID вишлиста'); return; }
+    req('DELETE', '/api/v1/wishlists/' + id, undefined, true);
+  };
+
+  function wl() {
+    const w = $('itemWishlistId').value || $('wishlistId').value;
+    if (!w) { log(0, false, '—', 'Укажите Wishlist ID'); return null; }
+    return w;
+  }
+  function it() {
+    const i = $('itemId').value;
+    if (!i) { log(0, false, '—', 'Укажите Item ID'); return null; }
+    return i;
+  }
+
+  $('btnItemCreate').onclick = () => {
+    const w = wl();
+    if (w == null) return;
+    req('POST', '/api/v1/wishlists/' + w + '/items/', $('createItemBody').value, true);
+  };
+  $('btnItemList').onclick = () => {
+    const w = wl();
+    if (w == null) return;
+    req('GET', '/api/v1/wishlists/' + w + '/items/', undefined, true);
+  };
+  $('btnItemGet').onclick = () => {
+    const w = wl();
+    const i = it();
+    if (w == null || i == null) return;
+    req('GET', '/api/v1/wishlists/' + w + '/items/' + i, undefined, true);
+  };
+  $('btnItemPut').onclick = () => {
+    const w = wl();
+    const i = it();
+    if (w == null || i == null) return;
+    req('PUT', '/api/v1/wishlists/' + w + '/items/' + i, $('updateItemBody').value, true);
+  };
+  $('btnItemDelete').onclick = () => {
+    const w = wl();
+    const i = it();
+    if (w == null || i == null) return;
+    req('DELETE', '/api/v1/wishlists/' + w + '/items/' + i, undefined, true);
+  };
+
+  $('btnSharedGet').onclick = () => {
+    const t = pubEl.value.trim();
+    if (!t) { log(0, false, 'GET shared', 'Укажите публичный token вишлиста'); return; }
+    req('GET', '/api/v1/shared/' + encodeURIComponent(t), undefined, false);
+  };
+  $('btnReserve').onclick = () => {
+    const t = pubEl.value.trim();
+    const i = it();
+    if (!t) { log(0, false, 'reserve', 'Укажите публичный token'); return; }
+    if (!i) { log(0, false, 'reserve', 'Укажите Item ID'); return; }
+    req('POST', '/api/v1/shared/' + encodeURIComponent(t) + '/items/' + i + '/reserve', undefined, false);
+  };
+
+  load();
+})();
+  </script>
+</body>
+</html>

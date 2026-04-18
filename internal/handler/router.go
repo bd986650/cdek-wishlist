@@ -20,6 +20,7 @@ func NewRouter(h Handlers, jwtSecret string) *chi.Mux {
 	r.Use(chimw.Recoverer)
 	r.Use(chimw.RequestID)
 	r.Use(chimw.RealIP)
+	r.Use(middleware.CORS)
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Post("/auth/register", h.Auth.Register)

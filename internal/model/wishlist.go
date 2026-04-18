@@ -18,11 +18,11 @@ type Wishlist struct {
 type CreateWishlistRequest struct {
 	Title       string `json:"title" validate:"required,max=255"`
 	Description string `json:"description" validate:"max=1000"`
-	EventDate   string `json:"event_date" validate:"omitempty"`
+	EventDate   string `json:"event_date" validate:"omitempty,datetime=2006-01-02"`
 }
 
 type UpdateWishlistRequest struct {
 	Title       *string `json:"title" validate:"omitempty,max=255"`
 	Description *string `json:"description" validate:"omitempty,max=1000"`
-	EventDate   *string `json:"event_date" validate:"omitempty"`
+	EventDate   *string `json:"event_date" validate:"omitempty,datetime=2006-01-02"`
 }
